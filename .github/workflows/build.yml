@@ -41,9 +41,21 @@ jobs:
         fetch-depth: 1
 
     - name: Install dependencies
+      timeout-minutes: 15
       run: |
-        sudo apt update
-        sudo apt install -y build-essential git curl wget bison flex zip bc cpio libssl-dev ccache python-is-python3 tar
+        # GitHub Azure runner 偶尔会分配到抽风的 azure.archive.ubuntu.com
+        # 统一切回 Ubuntu 官方源
+        for f in /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources /etc/apt/apt-mirrors.txt; do
+          [ -f "$f" ] || continue
+          sudo sed -i 's|azure.archive.ubuntu.com|archive.ubuntu.com|g' "$f"
+        done
+
+        echo "=== Active APT sources ==="
+        grep -R "archive.ubuntu.com\|security.ubuntu.com\|azure.archive.ubuntu.com"           /etc/apt/sources.list /etc/apt/sources.list.d /etc/apt/apt-mirrors.txt           2>/dev/null || true
+
+        sudo apt-get           -o Acquire::Retries=2           -o Acquire::http::Timeout=15           -o Acquire::https::Timeout=15           update
+
+        sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends           build-essential git curl wget bison flex zip bc cpio libssl-dev           ccache python-is-python3 tar
 
     # 生成短哈希（修复 substr() 报错）
     - name: Set short commit SHA
