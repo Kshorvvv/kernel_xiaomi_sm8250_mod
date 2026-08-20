@@ -88,9 +88,9 @@ if [ "$2" == "ksu" ]; then
     KSU_ENABLE=1
     if [ "$3" == "kpm" ]; then
         KPM_ENABLE=1
-        KSU_ZIP_STR=SukiSU-SUSFS-KPM
+        KSU_ZIP_STR=SukiSU-v4.1.3-KPM
     else
-        KSU_ZIP_STR=SukiSU-SUSFS-noKPM
+        KSU_ZIP_STR=SukiSU-v4.1.3-noKPM
     fi
 else
     KSU_ENABLE=0
@@ -101,8 +101,9 @@ echo "TARGET_DEVICE: $TARGET_DEVICE"
 
 if [ $KSU_ENABLE -eq 1 ]; then
     echo "KSU is enabled"
-    # Pin the integration ABI used by this non-GKI 4.19 tree.
-    curl -LSs "https://raw.githubusercontent.com/ApartTUSITU/SukiSU-Ultra/main/kernel/setup.sh" | bash -s 5dab4f278eaaadd44883dda6e3d826f56e47c450
+    # Pin userspace and kernel integration to the manager's stable release.
+    # v4.1.3 provides the boot event bridge required by module stages.
+    curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s v4.1.3
 else
     echo "KSU is disabled"
 fi
@@ -124,7 +125,7 @@ git clone https://github.com/liyafe1997/AnyKernel3 -b kona --single-branch --dep
 
 # Add date to local version
 local_version_str="-perf"
-local_version_date_str="-enuma-stable-v1-$(date +%Y%m%d)-${GIT_COMMIT_ID}-perf"
+local_version_date_str="-enuma-stable-v2-$(date +%Y%m%d)-${GIT_COMMIT_ID}-perf"
 
 sed -i "s/${local_version_str}/${local_version_date_str}/g" arch/arm64/configs/${TARGET_DEVICE}_defconfig
 
@@ -135,20 +136,10 @@ make $MAKE_ARGS ${TARGET_DEVICE}_defconfig
 
 if [ $KSU_ENABLE -eq 1 ]; then
     scripts/config --file out/.config \
+    -e KPROBES \
+    -e KRETPROBES \
     -e KSU \
-    -e KSU_SUSFS \
-    -e KSU_SUSFS_SUS_PATH \
-    -e KSU_SUSFS_SUS_MOUNT \
-    -e KSU_SUSFS_SUS_KSTAT \
-    -e KSU_SUSFS_SPOOF_UNAME \
-    -e KSU_SUSFS_ENABLE_LOG \
-    -e KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS \
-    -e KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG \
-    -e KSU_SUSFS_OPEN_REDIRECT \
-    -e KSU_SUSFS_SUS_MAP \
-    -e KSU_NONE_HOOK \
-    -d KSU_MANUAL_HOOK \
-    -d KSU_SYSCALL_HOOK \
+    -e KSU_MANUAL_SU \
     -e THREAD_INFO_IN_TASK
 
     if [ $KPM_ENABLE -eq 1 ]; then
@@ -277,20 +268,10 @@ make $MAKE_ARGS ${TARGET_DEVICE}_defconfig
 
 if [ $KSU_ENABLE -eq 1 ]; then
     scripts/config --file out/.config \
+    -e KPROBES \
+    -e KRETPROBES \
     -e KSU \
-    -e KSU_SUSFS \
-    -e KSU_SUSFS_SUS_PATH \
-    -e KSU_SUSFS_SUS_MOUNT \
-    -e KSU_SUSFS_SUS_KSTAT \
-    -e KSU_SUSFS_SPOOF_UNAME \
-    -e KSU_SUSFS_ENABLE_LOG \
-    -e KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS \
-    -e KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG \
-    -e KSU_SUSFS_OPEN_REDIRECT \
-    -e KSU_SUSFS_SUS_MAP \
-    -e KSU_NONE_HOOK \
-    -d KSU_MANUAL_HOOK \
-    -d KSU_SYSCALL_HOOK \
+    -e KSU_MANUAL_SU \
     -e THREAD_INFO_IN_TASK
 
     if [ $KPM_ENABLE -eq 1 ]; then
