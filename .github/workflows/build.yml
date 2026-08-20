@@ -97,5 +97,6 @@ jobs:
         name: ${{ github.event.inputs.device }}${{ github.event.inputs.include_ksu == 'true' && '-ksu' || '' }}-kernel
         path: |
           *.zip
+          out/.config
           out/arch/arm64/boot/Image
           out/arch/arm64/boot/dtb

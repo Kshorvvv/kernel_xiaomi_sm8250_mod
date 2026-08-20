@@ -83,9 +83,15 @@ clang --version
 
 
 KSU_ZIP_STR=NoKernelSU
+KPM_ENABLE=0
 if [ "$2" == "ksu" ]; then
     KSU_ENABLE=1
-    KSU_ZIP_STR=SukiSU-SUSFS
+    if [ "$3" == "kpm" ]; then
+        KPM_ENABLE=1
+        KSU_ZIP_STR=SukiSU-SUSFS-KPM
+    else
+        KSU_ZIP_STR=SukiSU-SUSFS-noKPM
+    fi
 else
     KSU_ENABLE=0
 fi
@@ -95,10 +101,16 @@ echo "TARGET_DEVICE: $TARGET_DEVICE"
 
 if [ $KSU_ENABLE -eq 1 ]; then
     echo "KSU is enabled"
-    # This branch retains the manual hooks required by this non-GKI 4.19 tree.
-    curl -LSs "https://raw.githubusercontent.com/ApartTUSITU/SukiSU-Ultra/main/kernel/setup.sh" | bash -s ApartTUSITU
+    # Pin the integration ABI used by this non-GKI 4.19 tree.
+    curl -LSs "https://raw.githubusercontent.com/ApartTUSITU/SukiSU-Ultra/main/kernel/setup.sh" | bash -s 5dab4f278eaaadd44883dda6e3d826f56e47c450
 else
     echo "KSU is disabled"
+fi
+
+if [ $KPM_ENABLE -eq 1 ]; then
+    echo "KPM binary patch is enabled"
+else
+    echo "KPM binary patch is disabled"
 fi
 
 
@@ -134,8 +146,16 @@ if [ $KSU_ENABLE -eq 1 ]; then
     -e KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG \
     -e KSU_SUSFS_OPEN_REDIRECT \
     -e KSU_SUSFS_SUS_MAP \
-    -e THREAD_INFO_IN_TASK \
-    -e KPM
+    -e KSU_NONE_HOOK \
+    -d KSU_MANUAL_HOOK \
+    -d KSU_SYSCALL_HOOK \
+    -e THREAD_INFO_IN_TASK
+
+    if [ $KPM_ENABLE -eq 1 ]; then
+        scripts/config --file out/.config -e KPM
+    else
+        scripts/config --file out/.config -d KPM
+    fi
 else
     scripts/config --file out/.config -d KSU
 fi
@@ -158,7 +178,7 @@ rm -rf anykernel/kernels/
 mkdir -p anykernel/kernels/
 
 # Patch for SukiSU KPM support. 
-if [ $KSU_ENABLE -eq 1 ]; then
+if [ $KPM_ENABLE -eq 1 ]; then
     cd out/arch/arm64/boot/
     wget https://github.com/SukiSU-Ultra/SukiSU_KernelPatch_patch/releases/download/0.12.2/patch_linux
     chmod +x patch_linux
@@ -268,8 +288,16 @@ if [ $KSU_ENABLE -eq 1 ]; then
     -e KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG \
     -e KSU_SUSFS_OPEN_REDIRECT \
     -e KSU_SUSFS_SUS_MAP \
-    -e THREAD_INFO_IN_TASK \
-    -e KPM
+    -e KSU_NONE_HOOK \
+    -d KSU_MANUAL_HOOK \
+    -d KSU_SYSCALL_HOOK \
+    -e THREAD_INFO_IN_TASK
+
+    if [ $KPM_ENABLE -eq 1 ]; then
+        scripts/config --file out/.config -e KPM
+    else
+        scripts/config --file out/.config -d KPM
+    fi
 else
     scripts/config --file out/.config -d KSU
 fi
@@ -327,7 +355,7 @@ rm -rf anykernel/kernels/
 mkdir -p anykernel/kernels/
 
 # Patch for SukiSU KPM support. 
-if [ $KSU_ENABLE -eq 1 ]; then
+if [ $KPM_ENABLE -eq 1 ]; then
     cd out/arch/arm64/boot/
     wget https://github.com/SukiSU-Ultra/SukiSU_KernelPatch_patch/releases/download/0.12.2/patch_linux
     chmod +x patch_linux
