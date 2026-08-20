@@ -95,10 +95,8 @@ echo "TARGET_DEVICE: $TARGET_DEVICE"
 
 if [ $KSU_ENABLE -eq 1 ]; then
     echo "KSU is enabled"
-    # No argument means the setup script checks out the latest stable tag.
-    # Passing "ApartTUSITU" is interpreted as a tag/commit by current scripts;
-    # that checkout fails and leaves the incompatible development branch active.
-    curl -LSs "https://raw.githubusercontent.com/ApartTUSITU/SukiSU-Ultra/main/kernel/setup.sh" | bash
+    # This branch retains the manual hooks required by this non-GKI 4.19 tree.
+    curl -LSs "https://raw.githubusercontent.com/ApartTUSITU/SukiSU-Ultra/main/kernel/setup.sh" | bash -s ApartTUSITU
 else
     echo "KSU is disabled"
 fi
