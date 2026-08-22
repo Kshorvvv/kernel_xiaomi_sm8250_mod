@@ -88,9 +88,9 @@ if [ "$2" == "ksu" ]; then
     KSU_ENABLE=1
     if [ "$3" == "kpm" ]; then
         KPM_ENABLE=1
-        KSU_ZIP_STR=SukiSU-v4.1.3-KPM
+        KSU_ZIP_STR=SukiSU-SUSFS-KPM
     else
-        KSU_ZIP_STR=SukiSU-v4.1.3-noKPM
+        KSU_ZIP_STR=SukiSU-SUSFS-noKPM
     fi
 else
     KSU_ENABLE=0
@@ -101,11 +101,9 @@ echo "TARGET_DEVICE: $TARGET_DEVICE"
 
 if [ $KSU_ENABLE -eq 1 ]; then
     echo "KSU is enabled"
-    # Pin userspace and kernel integration to the manager's stable release.
-    # v4.1.3 provides the boot event bridge required by module stages.
-    curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s v4.1.3
-    # Linux 4.19 compatibility: built-in KSU does not need module namespace metadata.
-    sed -i "/MODULE_IMPORT_NS/d" KernelSU/kernel/core/init.c
+    # Pin the integration ABI used by this non-GKI 4.19 tree.
+    curl -LSs "https://raw.githubusercontent.com/ApartTUSITU/SukiSU-Ultra/main/kernel/setup.sh" | bash -s 5dab4f278eaaadd44883dda6e3d826f56e47c450
+    sed -i "518s@.*@#if defined(CONFIG_KSU_SYSCALL_HOOK) || defined(CONFIG_KSU_SUSFS)@" KernelSU/kernel/ksud.c
 else
     echo "KSU is disabled"
 fi
@@ -138,10 +136,20 @@ make $MAKE_ARGS ${TARGET_DEVICE}_defconfig
 
 if [ $KSU_ENABLE -eq 1 ]; then
     scripts/config --file out/.config \
-    -e KPROBES \
-    -e KRETPROBES \
     -e KSU \
-    -e KSU_MANUAL_SU \
+    -e KSU_SUSFS \
+    -e KSU_SUSFS_SUS_PATH \
+    -e KSU_SUSFS_SUS_MOUNT \
+    -e KSU_SUSFS_SUS_KSTAT \
+    -e KSU_SUSFS_SPOOF_UNAME \
+    -e KSU_SUSFS_ENABLE_LOG \
+    -e KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS \
+    -e KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG \
+    -e KSU_SUSFS_OPEN_REDIRECT \
+    -e KSU_SUSFS_SUS_MAP \
+    -e KSU_NONE_HOOK \
+    -d KSU_MANUAL_HOOK \
+    -d KSU_SYSCALL_HOOK \
     -e THREAD_INFO_IN_TASK
 
     if [ $KPM_ENABLE -eq 1 ]; then
@@ -270,10 +278,20 @@ make $MAKE_ARGS ${TARGET_DEVICE}_defconfig
 
 if [ $KSU_ENABLE -eq 1 ]; then
     scripts/config --file out/.config \
-    -e KPROBES \
-    -e KRETPROBES \
     -e KSU \
-    -e KSU_MANUAL_SU \
+    -e KSU_SUSFS \
+    -e KSU_SUSFS_SUS_PATH \
+    -e KSU_SUSFS_SUS_MOUNT \
+    -e KSU_SUSFS_SUS_KSTAT \
+    -e KSU_SUSFS_SPOOF_UNAME \
+    -e KSU_SUSFS_ENABLE_LOG \
+    -e KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS \
+    -e KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG \
+    -e KSU_SUSFS_OPEN_REDIRECT \
+    -e KSU_SUSFS_SUS_MAP \
+    -e KSU_NONE_HOOK \
+    -d KSU_MANUAL_HOOK \
+    -d KSU_SYSCALL_HOOK \
     -e THREAD_INFO_IN_TASK
 
     if [ $KPM_ENABLE -eq 1 ]; then
