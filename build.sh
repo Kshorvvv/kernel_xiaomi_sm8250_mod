@@ -104,6 +104,8 @@ if [ $KSU_ENABLE -eq 1 ]; then
     # Pin userspace and kernel integration to the manager's stable release.
     # v4.1.3 provides the boot event bridge required by module stages.
     curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/main/kernel/setup.sh" | bash -s v4.1.3
+    # Linux 4.19 compatibility: built-in KSU does not need module namespace metadata.
+    sed -i "/MODULE_IMPORT_NS/d" KernelSU/kernel/core/init.c
 else
     echo "KSU is disabled"
 fi
